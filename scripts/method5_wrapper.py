@@ -181,7 +181,8 @@ async def scrape_profile_and_posts(username: str, key: str):
         print(json.dumps({
             "success": True, 
             "followers": results_list, 
-            "info": f"Fetched Profile + Info + Related + {len(results_list)-10} Posts."
+            "info": f"Fetched Profile + Info + Related + {len(results_list)-10} Posts.",
+            "is_private": user_data.get("is_private")
         }))
 
     except Exception as e:

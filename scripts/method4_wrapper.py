@@ -58,7 +58,8 @@ def scrape_method4(username, session_id):
         print(json.dumps({
             "success": True,
             "method": "Method 4 (Instabot)",
-            "followers": followers_data
+            "followers": followers_data,
+            "is_private": profile.is_private
         }))
         
     except Exception as e:

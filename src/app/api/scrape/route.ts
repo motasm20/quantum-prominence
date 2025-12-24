@@ -52,6 +52,7 @@ export async function POST(req: Request) {
                         success: true,
                         method: method.name,
                         followers: result.followers,
+                        is_private: result.is_private
                     });
                 } else {
                     const msg = result.error || 'Unknown error';

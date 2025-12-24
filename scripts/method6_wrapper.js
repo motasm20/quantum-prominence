@@ -41,7 +41,8 @@ async function scrapeFollowers() {
         console.log(JSON.stringify({
             success: true,
             followers: followers,
-            method: 'Method 6 (InstaTouch)'
+            method: 'Method 6 (InstaTouch)',
+            is_private: false // InstaTouch typically fails on private, assuming public if successful
         }));
 
     } catch (error) {

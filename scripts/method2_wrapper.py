@@ -33,7 +33,13 @@ def get_followers(target_username, session_id=None):
             if count >= limit:
                 break
                 
-        print(json.dumps({"success": True, "followers": followers_list}))
+        is_private = profile.is_private
+        
+        print(json.dumps({
+            "success": True, 
+            "followers": followers_list,
+            "is_private": is_private
+        }))
         
     except Exception as e:
         error_msg = str(e)
