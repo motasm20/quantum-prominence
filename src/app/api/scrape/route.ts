@@ -22,6 +22,13 @@ export async function POST(req: Request) {
                 fn: async () => await runPythonWrapper('method5_wrapper.py', username, scrapflyKey),
             });
         }
+        else if (selectedMethod === 'method4') {
+            // Method 4 (Instabot / Instaloader Deep)
+            methods.push({
+                name: 'Method 4 (Instabot Deep Scrape)',
+                fn: async () => await runPythonWrapper('method4_wrapper.py', username, undefined, sessionId),
+            });
+        }
         else {
             // Method 2 (Instaloader)
             methods.push({

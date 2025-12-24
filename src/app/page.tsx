@@ -21,7 +21,7 @@ export default function Home() {
   const [status, setStatus] = useState('');
 
   const [scrapflyKey, setScrapflyKey] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState<'method2' | 'method5' | 'method6'>('method5');
+  const [selectedMethod, setSelectedMethod] = useState<'method2' | 'method4' | 'method5' | 'method6'>('method5');
   const [sessionId, setSessionId] = useState('');
 
   const handleScrape = async (e: React.FormEvent) => {
@@ -94,6 +94,20 @@ export default function Home() {
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ color: '#ccc', display: 'block', marginBottom: '10px', fontSize: '0.9rem' }}>Select Scraping Method:</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+              {/* Method 1: JS Snippet */}
+              <div
+                style={{
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'rgba(0,0,0,0.2)',
+                  padding: '10px', borderRadius: '12px', cursor: 'not-allowed', textAlign: 'center', opacity: 0.6
+                }}
+                title="Manual Browser Snippet"
+              >
+                <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#fff' }}>Method 1</div>
+                <div style={{ fontSize: '0.75rem', color: '#888' }}>JS Console (Manual)</div>
+              </div>
+
+              {/* Method 2: Instaloader */}
               <div
                 onClick={() => setSelectedMethod('method2')}
                 style={{
@@ -106,6 +120,33 @@ export default function Home() {
                 <div style={{ fontSize: '0.75rem', color: '#888' }}>Instaloader (Python)</div>
               </div>
 
+              {/* Method 3: Browser Extension */}
+              <div
+                style={{
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'rgba(0,0,0,0.2)',
+                  padding: '10px', borderRadius: '12px', cursor: 'not-allowed', textAlign: 'center', opacity: 0.6
+                }}
+                title="Browser Extension (Manual)"
+              >
+                <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#fff' }}>Method 3</div>
+                <div style={{ fontSize: '0.75rem', color: '#888' }}>Extension (Browser)</div>
+              </div>
+
+              {/* Method 4: Instabot */}
+              <div
+                onClick={() => setSelectedMethod('method4')}
+                style={{
+                  border: selectedMethod === 'method4' ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)',
+                  background: selectedMethod === 'method4' ? 'rgba(138, 43, 226, 0.1)' : 'rgba(0,0,0,0.2)',
+                  padding: '10px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'
+                }}
+              >
+                <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#fff' }}>Method 4</div>
+                <div style={{ fontSize: '0.75rem', color: '#888' }}>Instabot (Deep)</div>
+              </div>
+
+              {/* Method 5: ScrapFly */}
               <div
                 onClick={() => setSelectedMethod('method5')}
                 style={{
@@ -118,6 +159,7 @@ export default function Home() {
                 <div style={{ fontSize: '0.75rem', color: '#888' }}>ScrapFly (API)</div>
               </div>
 
+              {/* Method 6: InstaTouch */}
               <div
                 onClick={() => setSelectedMethod('method6')}
                 style={{
