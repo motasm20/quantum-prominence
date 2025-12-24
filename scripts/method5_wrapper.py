@@ -17,6 +17,11 @@ async def scrape_profile_and_posts(username: str, key: str):
         print(json.dumps({"success": False, "error": "ScrapFly API Key is required for this method."}))
         return
 
+async def scrape_profile_and_posts(username: str, key: str):
+    if not key:
+        print(json.dumps({"success": False, "error": "ScrapFly API Key is required for this method."}))
+        return
+
     try:
         scrapfly = ScrapflyClient(key=key)
         
@@ -46,7 +51,10 @@ async def scrape_profile_and_posts(username: str, key: str):
 
         results_list = []
 
-        # Add Profile as the first "result"
+        # -- RICH CONTACT / BIO INFO --
+        # Extract everything possible from the user object
+        
+        # 1. Main Profile Card
         results_list.append({
             "username": user_data.get("username"),
             "full_name": f"[PROFILE] {user_data.get('full_name')}",
@@ -55,13 +63,47 @@ async def scrape_profile_and_posts(username: str, key: str):
             "biography": user_data.get("biography")
         })
 
-        # 2. Fetch Recent Posts (to get "as much as possible")
-        # We use the GraphQL query for user timeline
+        # 2. Detailed Stats & Info
+        info_fields = [
+            ("Business Category", user_data.get("business_category_name")),
+            ("Category", user_data.get("category_name")),
+            ("Email", user_data.get("business_email")),
+            ("Phone", user_data.get("business_phone_number")),
+            ("Website", user_data.get("external_url")),
+            ("Following", str(user_data.get("edge_follow", {}).get("count"))),
+            ("Is Private", str(user_data.get("is_private"))),
+            ("Is Verified", str(user_data.get("is_verified"))),
+        ]
+
+        for label, value in info_fields:
+            if value:
+                results_list.append({
+                    "username": "Info", 
+                    "full_name": label, 
+                    "biography": value,
+                    "id": f"info_{label}"
+                })
+
+        # 3. Related Profiles
+        related = user_data.get("edge_related_profiles", {}).get("edges", [])
+        for rel in related:
+            node = rel.get("node", {})
+            results_list.append({
+                "username": "Related",
+                "full_name": node.get("full_name"),
+                "username": f"@{node.get('username')}", # Show username as main text
+                "biography": "Related Account",
+                "id": node.get("id")
+            })
+
+        # 4. Fetch Recent Posts (Loop for more)
+        # We try to fetch up to 3 batches (approx 36 posts) directly if possible
+        
         variables = {
             "after": None,
             "before": None,
             "data": {
-                "count": 12, # Fetch last 12 posts
+                "count": 12, 
                 "include_reel_media_seen_timestamp": True,
                 "include_relationship_info": True,
                 "latest_besties_reel_media": True,
@@ -74,47 +116,72 @@ async def scrape_profile_and_posts(username: str, key: str):
             "__relay_internal__pv__PolarisShareSheetV3relayprovider": True
         }
 
-        params = {
-            "doc_id": INSTAGRAM_ACCOUNT_DOCUMENT_ID,
-            "variables": json.dumps(variables, separators=(",", ":"))
-        }
+        # Initial Page
+        has_next_page = True
+        pages_fetched = 0
+        max_pages = 3
         
-        posts_url = f"https://www.instagram.com/graphql/query/?{urlencode(params)}"
-        
-        posts_result: ScrapeApiResponse = await scrapfly.async_scrape(
-            ScrapeConfig(
-                url=posts_url,
-                headers={"content-type": "application/x-www-form-urlencoded"},
-                asp=True,
-                country="US",
-                proxy_pool="public_residential_pool",
-            )
-        )
-
-        if posts_result.status_code == 200:
-            posts_data = json.loads(posts_result.content)
-            edges = posts_data.get("data", {}).get("xdt_api__v1__feed__user_timeline_graphql_connection", {}).get("edges", [])
+        while has_next_page and pages_fetched < max_pages:
+            params = {
+                "doc_id": INSTAGRAM_ACCOUNT_DOCUMENT_ID,
+                "variables": json.dumps(variables, separators=(",", ":"))
+            }
             
-            for edge in edges:
-                node = edge.get("node", {})
-                caption_text = ""
-                try:
-                    caption_text = node.get("caption", {}).get("text", "")
-                except:
-                    pass
+            posts_url = f"https://www.instagram.com/graphql/query/?{urlencode(params)}"
+            
+            # Add small delay or just go sequentially
+            posts_result: ScrapeApiResponse = await scrapfly.async_scrape(
+                ScrapeConfig(
+                    url=posts_url,
+                    headers={"content-type": "application/x-www-form-urlencoded"},
+                    asp=True,
+                    country="US",
+                    proxy_pool="public_residential_pool",
+                )
+            )
+
+            if posts_result.status_code == 200:
+                posts_data = json.loads(posts_result.content)
+                timeline = posts_data.get("data", {}).get("xdt_api__v1__feed__user_timeline_graphql_connection", {})
+                edges = timeline.get("edges", [])
                 
-                # We map posts to the "follower" structure so they show up in the list
-                results_list.append({
-                    "username": "Post", # Label as Post
-                    "full_name": caption_text[:50] + "..." if caption_text else "Media Post",
-                    "id": node.get("id"),
-                    "biography": f"Likes: {node.get('like_count')} | Comments: {node.get('comment_count')}"
-                })
+                for edge in edges:
+                    node = edge.get("node", {})
+                    caption_text = ""
+                    try:
+                        caption_text = node.get("caption", {}).get("text", "")
+                    except:
+                        pass
+                    
+                    typename = node.get("__typename", "Post")
+                    is_video = node.get("is_video", False)
+                    type_label = "Video" if is_video else "Image"
+                    
+                    results_list.append({
+                        "username": f"Post ({type_label})",
+                        "full_name": caption_text[:60] + "..." if caption_text else "Media Post",
+                        "id": node.get("id"),
+                        "biography": f"Likes: {node.get('like_count')} | Comments: {node.get('comment_count')} | Loc: {node.get('location', {}).get('name', 'N/A')}",
+                        "follower_count": node.get('like_count') # Hack to show likes in the 'count' column if UI supports it
+                    })
+
+                page_info = timeline.get("page_info", {})
+                has_next_page = page_info.get("has_next_page")
+                end_cursor = page_info.get("end_cursor")
+                
+                if end_cursor:
+                    variables["after"] = end_cursor
+                else:
+                    break
+                    
+                pages_fetched += 1
+            else:
+                break
 
         print(json.dumps({
             "success": True, 
             "followers": results_list, 
-            "info": "Fetched Profile + Recent Posts. For the real Follower List, use Method 2 with a Session ID."
+            "info": f"Fetched Profile + Info + Related + {len(results_list)-10} Posts."
         }))
 
     except Exception as e:
