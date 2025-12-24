@@ -9,6 +9,9 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         const { username, scrapflyKey, selectedMethod, sessionId } = body;
+
+        // Define scraping methods
+        const methods: any[] = [];
         if (selectedMethod === 'method6') {
             // Method 6 (InstaTouch)
             methods.push({
