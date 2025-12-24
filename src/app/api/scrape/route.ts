@@ -74,33 +74,38 @@ export async function POST(req: Request) {
             });
         }
 
-        const errors: string[] = [];
+        const attempt_log: any[] = [];
 
         for (const method of methods) {
             console.log(`Attempting ${method.name}...`);
             try {
                 const result = await method.fn();
                 if (result.success) {
+                    attempt_log.push({ method: method.name, status: 'success' });
                     return NextResponse.json({
                         success: true,
                         method: method.name,
                         followers: result.followers,
-                        is_private: result.is_private
+                        is_private: result.is_private,
+                        attempt_log: attempt_log
                     });
                 } else {
                     const msg = result.error || 'Unknown error';
                     console.warn(`${method.name} failed: ${msg}`);
-                    errors.push(`${method.name}: ${msg}`);
+                    attempt_log.push({ method: method.name, status: 'failed', error: msg });
                     // Continue to next method
                 }
             } catch (e: any) {
                 console.error(`${method.name} exception: ${e.message}`);
-                errors.push(`${method.name} exception: ${e.message}`);
+                attempt_log.push({ method: method.name, status: 'error', error: e.message });
             }
         }
 
         return NextResponse.json(
-            { error: `All methods failed. Details: ${errors.join(' | ')}` },
+            {
+                error: `All methods failed.`,
+                attempt_log: attempt_log
+            },
             { status: 500 }
         );
     } catch (err: any) {
