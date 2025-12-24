@@ -19,8 +19,9 @@ export default function Home() {
   const [results, setResults] = useState<Follower[]>([]);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
+
   const [scrapflyKey, setScrapflyKey] = useState('');
-  const [useScrapfly, setUseScrapfly] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<'method2' | 'method5' | 'method6'>('method5');
   const [sessionId, setSessionId] = useState('');
 
   const handleScrape = async (e: React.FormEvent) => {
@@ -38,7 +39,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, scrapflyKey, useScrapfly, sessionId }),
+        body: JSON.stringify({ username, scrapflyKey, selectedMethod, sessionId }),
       });
 
       const data = await response.json();
@@ -89,22 +90,53 @@ export default function Home() {
             />
           </div>
 
-          <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <label className={styles.label}>
-              <input
-                type="checkbox"
-                className={styles.checkbox}
-                checked={useScrapfly}
-                onChange={(e) => setUseScrapfly(e.target.checked)}
-                disabled={loading}
-              />
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                Use ScrapFly (Method 5) <ShieldCheck size={16} color="#4ade80" />
-              </span>
-            </label>
 
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ color: '#ccc', display: 'block', marginBottom: '10px', fontSize: '0.9rem' }}>Select Scraping Method:</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+              <div
+                onClick={() => setSelectedMethod('method2')}
+                style={{
+                  border: selectedMethod === 'method2' ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)',
+                  background: selectedMethod === 'method2' ? 'rgba(138, 43, 226, 0.1)' : 'rgba(0,0,0,0.2)',
+                  padding: '10px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'
+                }}
+              >
+                <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#fff' }}>Method 2</div>
+                <div style={{ fontSize: '0.75rem', color: '#888' }}>Instaloader (Python)</div>
+              </div>
+
+              <div
+                onClick={() => setSelectedMethod('method5')}
+                style={{
+                  border: selectedMethod === 'method5' ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)',
+                  background: selectedMethod === 'method5' ? 'rgba(138, 43, 226, 0.1)' : 'rgba(0,0,0,0.2)',
+                  padding: '10px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'
+                }}
+              >
+                <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#fff' }}>Method 5</div>
+                <div style={{ fontSize: '0.75rem', color: '#888' }}>ScrapFly (API)</div>
+              </div>
+
+              <div
+                onClick={() => setSelectedMethod('method6')}
+                style={{
+                  border: selectedMethod === 'method6' ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)',
+                  background: selectedMethod === 'method6' ? 'rgba(138, 43, 226, 0.1)' : 'rgba(0,0,0,0.2)',
+                  padding: '10px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+                  opacity: 1
+                }}
+                title="Method 6 (InstaTouch)"
+              >
+                <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#fff' }}>Method 6</div>
+                <div style={{ fontSize: '0.75rem', color: '#888' }}>InstaTouch (Node)</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <AnimatePresence>
-              {useScrapfly && (
+              {selectedMethod === 'method5' ? (
                 <motion.div
                   initial={{ height: 0, opacity: 0, marginTop: 0 }}
                   animate={{ height: 'auto', opacity: 1, marginTop: 8 }}
@@ -128,23 +160,35 @@ export default function Home() {
                     Required for Method 5. Get a key at <a href="https://scrapfly.io" target="_blank" className={styles.link}>scrapfly.io</a>
                   </div>
                 </motion.div>
-              )}
+              ) : (null)}
             </AnimatePresence>
           </div>
 
-          <div className={styles.inputGroup}>
-            <input
-              type="text"
-              className={styles.input}
-              placeholder="Instagram Session ID (Optional, for Method 2)"
-              value={sessionId}
-              onChange={(e) => setSessionId(e.target.value)}
-              disabled={loading}
-              style={{ fontSize: '0.9rem', borderColor: 'rgba(255, 255, 255, 0.1)' }}
-            />
-            <div className={styles.helperText}>
-              Method 2 (Instaloader) needs this to bypass login screens. Found in browser cookies as `sessionid`.
-            </div>
+          <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <AnimatePresence>
+              {(selectedMethod === 'method2' || selectedMethod === 'method6') && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className={styles.inputGroup}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="Instagram Session ID (Optional but Recommended)"
+                    value={sessionId}
+                    onChange={(e) => setSessionId(e.target.value)}
+                    disabled={loading}
+                    style={{ fontSize: '0.9rem', borderColor: !sessionId ? 'rgba(255, 68, 68, 0.5)' : 'rgba(255, 255, 255, 0.1)' }}
+                  />
+                  <div className={styles.helperText}>
+                    Required for Method 6 and recommended for Method 2 to fetch details. Copy `sessionid` from your browser cookies.
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <button type="submit" className={styles.button} disabled={loading}>

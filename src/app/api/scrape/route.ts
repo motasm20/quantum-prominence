@@ -8,26 +8,27 @@ const execAsync = promisify(exec);
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { username, useScrapfly, scrapflyKey } = body;
-
-        if (!username) {
-            return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+        if (selectedMethod === 'method6') {
+            // Method 6 (InstaTouch)
+            methods.push({
+                name: 'Method 6 (InstaTouch)',
+                fn: async () => await runPythonWrapper('method6_wrapper.js', username, scrapflyKey, sessionId, true), // Passing JS true
+            });
         }
-
-        // Define scraping methods
-        const methods = [];
-
-        if (useScrapfly) {
+        else if (selectedMethod === 'method5') {
+            // Method 5 (ScrapFly)
             methods.push({
                 name: 'Method 5 (ScrapFly)',
                 fn: async () => await runPythonWrapper('method5_wrapper.py', username, scrapflyKey),
             });
         }
-
-        methods.push({
-            name: 'Method 2 (Instaloader w/ Session)',
-            fn: async () => await runPythonWrapper('method2_wrapper.py', username, body.sessionId),
-        });
+        else {
+            // Method 2 (Instaloader)
+            methods.push({
+                name: 'Method 2 (Instaloader w/ Session)',
+                fn: async () => await runPythonWrapper('method2_wrapper.py', username, sessionId),
+            });
+        }
 
         const errors: string[] = [];
 
@@ -62,25 +63,36 @@ export async function POST(req: Request) {
     }
 }
 
-async function runPythonWrapper(scriptName: string, username: string, key?: string) {
+async function runPythonWrapper(scriptName: string, username: string, key?: string, sessionId?: string, isNode: boolean = false) {
     const scriptPath = path.join(process.cwd(), 'scripts', scriptName);
 
-    // Ensure we use the python environment where instaloader is installed.
-    // We assume 'python' is in path and has instaloader. 
-    // If pip installed to a user dir (like indicated in logs), we might strictly need that python.
-    // The logs showed: "WARNING: The script instaloader.exe is installed in 'C:\Users\motas\AppData\Roaming\Python\Python312\Scripts'"
-    // We should try 'python' first.
+    let command = '';
 
-    const command = key
-        ? `python "${scriptPath}" "${username}" "${key}"`
-        : `python "${scriptPath}" "${username}"`;
+    if (isNode) {
+        // Node execution for Method 6
+        // Args: script path, username, sessionid
+        const safeSession = sessionId || '';
+        command = `node "${scriptPath}" "${username}" "${safeSession}"`;
+    } else {
+        // Python execution
+        // Args depend on the script
+        if (scriptName.includes('method5')) {
+            command = `python "${scriptPath}" "${username}" "${key}"`;
+        } else {
+            // Method 2: username, sessionId (optional)
+            const safeSession = sessionId || key || ''; # key passed as session in some fallbacks, but here be explicit
+            if (safeSession) {
+                command = `python "${scriptPath}" "${username}" "${safeSession}"`;
+            } else {
+                command = `python "${scriptPath}" "${username}"`;
+            }
+        }
+    }
 
     try {
         const { stdout, stderr } = await execAsync(command);
 
         if (stderr && stderr.trim().length > 0) {
-            // Instaloader prints info to stderr sometimes, not always fatal.
-            // We rely on stdout being JSON.
             console.log('Wrapper Stderr:', stderr);
         }
 
@@ -88,7 +100,7 @@ async function runPythonWrapper(scriptName: string, username: string, key?: stri
             const data = JSON.parse(stdout.trim());
             return data;
         } catch (parseErr) {
-            return { success: false, error: `Failed to parse Python output: ${stdout}` };
+            return { success: false, error: `Failed to parse output: ${stdout}` };
         }
     } catch (execErr: any) {
         return { success: false, error: `Execution failed: ${execErr.message}` };
