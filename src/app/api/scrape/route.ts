@@ -8,6 +8,7 @@ const execAsync = promisify(exec);
 export async function POST(req: Request) {
     try {
         const body = await req.json();
+        const { username, scrapflyKey, selectedMethod, sessionId } = body;
         if (selectedMethod === 'method6') {
             // Method 6 (InstaTouch)
             methods.push({
