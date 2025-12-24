@@ -21,7 +21,43 @@ export default function Home() {
   const [status, setStatus] = useState('');
 
   const [scrapflyKey, setScrapflyKey] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState<'method2' | 'method4' | 'method5' | 'method6'>('method5');
+  const [selectedMethod, setSelectedMethod] = useState<'method2' | 'method4' | 'method5' | 'method6' | 'auto'>('auto');
+  // ...
+
+  // Inside the grid:
+  {/* Auto / Best Effort */ }
+              <div
+                onClick={() => setSelectedMethod('auto')}
+                style={{
+                  gridColumn: 'span 3',
+                  border: selectedMethod === 'auto' ? '2px solid #00e676' : '1px solid rgba(255,255,255,0.1)',
+                  background: selectedMethod === 'auto' ? 'rgba(0, 230, 118, 0.1)' : 'rgba(0,0,0,0.2)',
+                  padding: '15px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+                  marginBottom: '10px'
+                }}
+              >
+                <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    🚀 Auto Pilot (Best Effort)
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#aaa', marginTop: '4px' }}>
+                    Automatically tries ALL methods until one succeeds.
+                </div>
+              </div>
+
+  // ... (existing grid methods below) ...
+
+  // Update input visibility logic
+            <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <AnimatePresence>
+              {(selectedMethod === 'method5' || selectedMethod === 'auto') && (
+                <motion.div
+  // ... (ScrapFly input) ...
+  
+  // ...
+            <AnimatePresence>
+              {(selectedMethod === 'method2' || selectedMethod === 'method4' || selectedMethod === 'method6' || selectedMethod === 'auto') && (
+                <motion.div
+  // ... (Session ID input) ...
   const [sessionId, setSessionId] = useState('');
 
   const handleScrape = async (e: React.FormEvent) => {
@@ -94,6 +130,25 @@ export default function Home() {
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ color: '#ccc', display: 'block', marginBottom: '10px', fontSize: '0.9rem' }}>Select Scraping Method:</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+              {/* Auto / Best Effort */}
+              <div
+                onClick={() => setSelectedMethod('auto')}
+                style={{
+                  gridColumn: '1 / -1',
+                  border: selectedMethod === 'auto' ? '2px solid #00e676' : '1px solid rgba(255,255,255,0.1)',
+                  background: selectedMethod === 'auto' ? 'rgba(0, 230, 118, 0.1)' : 'rgba(0,0,0,0.2)',
+                  padding: '15px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+                  marginBottom: '5px'
+                }}
+              >
+                <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    🚀 Auto Pilot (Best Effort)
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#aaa', marginTop: '4px' }}>
+                    Automatically tries ALL methods until one succeeds.
+                </div>
+              </div>
+
               {/* Method 1: JS Snippet */}
               <div
                 style={{
@@ -178,7 +233,7 @@ export default function Home() {
 
           <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <AnimatePresence>
-              {selectedMethod === 'method5' ? (
+              {(selectedMethod === 'method5' || selectedMethod === 'auto') ? (
                 <motion.div
                   initial={{ height: 0, opacity: 0, marginTop: 0 }}
                   animate={{ height: 'auto', opacity: 1, marginTop: 8 }}
@@ -208,7 +263,7 @@ export default function Home() {
 
           <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <AnimatePresence>
-              {(selectedMethod === 'method2' || selectedMethod === 'method6') && (
+              {(selectedMethod === 'method2' || selectedMethod === 'method6' || selectedMethod === 'auto') && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}

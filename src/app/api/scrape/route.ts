@@ -12,7 +12,40 @@ export async function POST(req: Request) {
 
         // Define scraping methods
         const methods: any[] = [];
-        if (selectedMethod === 'method6') {
+
+        if (selectedMethod === 'auto') {
+            // Priority 1: Method 5 (ScrapFly) - Most reliable if Key exists
+            if (scrapflyKey) {
+                methods.push({
+                    name: 'Method 5 (ScrapFly)',
+                    fn: async () => await runPythonWrapper('method5_wrapper.py', username, scrapflyKey),
+                });
+            }
+
+            // Priority 2: Method 6 (InstaTouch) - Reliable with Session ID
+            if (sessionId) {
+                methods.push({
+                    name: 'Method 6 (InstaTouch)',
+                    fn: async () => await runPythonWrapper('method6_wrapper.js', username, scrapflyKey, sessionId, true),
+                });
+            }
+
+            // Priority 3: Method 4 (Instabot Deep) - Good for emails, needs session
+            if (sessionId) {
+                methods.push({
+                    name: 'Method 4 (Instabot Deep Scrape)',
+                    fn: async () => await runPythonWrapper('method4_wrapper.py', username, undefined, sessionId),
+                });
+            }
+
+            // Priority 4: Method 2 (Instaloader) - Fallback
+            methods.push({
+                name: 'Method 2 (Instaloader w/ Session)',
+                fn: async () => await runPythonWrapper('method2_wrapper.py', username, sessionId),
+            });
+
+        }
+        else if (selectedMethod === 'method6') {
             // Method 6 (InstaTouch)
             methods.push({
                 name: 'Method 6 (InstaTouch)',
