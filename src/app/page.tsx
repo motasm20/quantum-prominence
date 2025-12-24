@@ -21,6 +21,7 @@ export default function Home() {
   const [status, setStatus] = useState('');
   const [scrapflyKey, setScrapflyKey] = useState('');
   const [useScrapfly, setUseScrapfly] = useState(false);
+  const [sessionId, setSessionId] = useState('');
 
   const handleScrape = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +38,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, scrapflyKey, useScrapfly }),
+        body: JSON.stringify({ username, scrapflyKey, useScrapfly, sessionId }),
       });
 
       const data = await response.json();
@@ -129,6 +130,21 @@ export default function Home() {
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
+
+          <div className={styles.inputGroup}>
+            <input
+              type="text"
+              className={styles.input}
+              placeholder="Instagram Session ID (Optional, for Method 2)"
+              value={sessionId}
+              onChange={(e) => setSessionId(e.target.value)}
+              disabled={loading}
+              style={{ fontSize: '0.9rem', borderColor: 'rgba(255, 255, 255, 0.1)' }}
+            />
+            <div className={styles.helperText}>
+              Method 2 (Instaloader) needs this to bypass login screens. Found in browser cookies as `sessionid`.
+            </div>
           </div>
 
           <button type="submit" className={styles.button} disabled={loading}>

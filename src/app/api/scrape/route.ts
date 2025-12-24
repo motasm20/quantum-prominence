@@ -25,8 +25,8 @@ export async function POST(req: Request) {
         }
 
         methods.push({
-            name: 'Method 2 (Instaloader Python Wrapper)',
-            fn: async () => await runPythonWrapper('method2_wrapper.py', username),
+            name: 'Method 2 (Instaloader w/ Session)',
+            fn: async () => await runPythonWrapper('method2_wrapper.py', username, body.sessionId),
         });
 
         const errors: string[] = [];
