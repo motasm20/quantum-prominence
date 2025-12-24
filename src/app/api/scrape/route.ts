@@ -8,22 +8,28 @@ const execAsync = promisify(exec);
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { username } = body;
+        const { username, useScrapfly, scrapflyKey } = body;
 
         if (!username) {
             return NextResponse.json({ error: 'Username is required' }, { status: 400 });
         }
 
         // Define scraping methods
-        const methods = [
-            {
-                name: 'Method 2 (Instaloader Python Wrapper)',
-                fn: async () => await runPythonWrapper('method2_wrapper.py', username),
-            },
-            // Validation for Method 4 can be added here
-        ];
+        const methods = [];
 
-        let lastError = '';
+        if (useScrapfly) {
+            methods.push({
+                name: 'Method 5 (ScrapFly)',
+                fn: async () => await runPythonWrapper('method5_wrapper.py', username, scrapflyKey),
+            });
+        }
+
+        methods.push({
+            name: 'Method 2 (Instaloader Python Wrapper)',
+            fn: async () => await runPythonWrapper('method2_wrapper.py', username),
+        });
+
+        const errors: string[] = [];
 
         for (const method of methods) {
             console.log(`Attempting ${method.name}...`);
@@ -36,18 +42,19 @@ export async function POST(req: Request) {
                         followers: result.followers,
                     });
                 } else {
-                    lastError = result.error || 'Unknown error';
-                    console.warn(`${method.name} failed: ${lastError}`);
+                    const msg = result.error || 'Unknown error';
+                    console.warn(`${method.name} failed: ${msg}`);
+                    errors.push(`${method.name}: ${msg}`);
                     // Continue to next method
                 }
             } catch (e: any) {
-                lastError = e.message;
                 console.error(`${method.name} exception: ${e.message}`);
+                errors.push(`${method.name} exception: ${e.message}`);
             }
         }
 
         return NextResponse.json(
-            { error: `All methods failed. Last error: ${lastError}` },
+            { error: `All methods failed. Details: ${errors.join(' | ')}` },
             { status: 500 }
         );
     } catch (err: any) {
@@ -55,7 +62,7 @@ export async function POST(req: Request) {
     }
 }
 
-async function runPythonWrapper(scriptName: string, username: string) {
+async function runPythonWrapper(scriptName: string, username: string, key?: string) {
     const scriptPath = path.join(process.cwd(), 'scripts', scriptName);
 
     // Ensure we use the python environment where instaloader is installed.
@@ -64,7 +71,9 @@ async function runPythonWrapper(scriptName: string, username: string) {
     // The logs showed: "WARNING: The script instaloader.exe is installed in 'C:\Users\motas\AppData\Roaming\Python\Python312\Scripts'"
     // We should try 'python' first.
 
-    const command = `python "${scriptPath}" "${username}"`;
+    const command = key
+        ? `python "${scriptPath}" "${username}" "${key}"`
+        : `python "${scriptPath}" "${username}"`;
 
     try {
         const { stdout, stderr } = await execAsync(command);
