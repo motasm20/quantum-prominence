@@ -87,7 +87,7 @@ async function runPythonWrapper(scriptName: string, username: string, key?: stri
             command = `python "${scriptPath}" "${username}" "${key}"`;
         } else {
             // Method 2: username, sessionId (optional)
-            const safeSession = sessionId || key || ''; # key passed as session in some fallbacks, but here be explicit
+            const safeSession = sessionId || key || ''; // key passed as session in some fallbacks, but here be explicit
             if (safeSession) {
                 command = `python "${scriptPath}" "${username}" "${safeSession}"`;
             } else {
