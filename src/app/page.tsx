@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import styles from './page.module.css';
-import { Search, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Search, Loader2, AlertCircle, ShieldCheck, Copy, X, Terminal, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { METHOD1_SNIPPET, METHOD3_INSTRUCTIONS } from '../data/snippets';
 
 type Follower = {
   username: string;
@@ -12,6 +13,12 @@ type Follower = {
   follower_count?: number;
   biography?: string;
 };
+
+type ManualModalContent = {
+  type: 'code' | 'text';
+  title: string;
+  content: string;
+} | null;
 
 export default function Home() {
   const [username, setUsername] = useState('');
@@ -24,6 +31,28 @@ export default function Home() {
   const [selectedMethod, setSelectedMethod] = useState<'method2' | 'method4' | 'method5' | 'method6' | 'auto'>('auto');
   const [sessionId, setSessionId] = useState('');
   const [attemptLog, setAttemptLog] = useState<any[]>([]);
+  const [modalContent, setModalContent] = useState<ManualModalContent>(null);
+
+  const openManualMethod = (method: 'method1' | 'method3') => {
+    if (method === 'method1') {
+      setModalContent({
+        type: 'code',
+        title: 'Method 1: Manual JS Console',
+        content: METHOD1_SNIPPET
+      });
+    } else {
+      setModalContent({
+        type: 'text',
+        title: 'Method 3: Browser Extension (Advanced)',
+        content: METHOD3_INSTRUCTIONS
+      });
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert('Code copied to clipboard! Paste it in the Console (F12).');
+  };
 
   const handleScrape = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,13 +150,19 @@ export default function Home() {
 
               {/* Method 1: JS Snippet */}
               <div
+                onClick={() => openManualMethod('method1')}
                 style={{
                   border: '1px solid rgba(255,255,255,0.1)',
-                  background: 'rgba(0,0,0,0.2)',
-                  padding: '10px', borderRadius: '12px', cursor: 'not-allowed', textAlign: 'center', opacity: 0.6
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  padding: '10px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center',
+                  transition: 'all 0.2s',
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}
+                className={styles.methodCardHover}
                 title="Manual Browser Snippet"
               >
+                <div style={{ position: 'absolute', top: 5, right: 5, opacity: 0.5 }}><Terminal size={14} /></div>
                 <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#fff' }}>Method 1</div>
                 <div style={{ fontSize: '0.75rem', color: '#888' }}>JS Console (Manual)</div>
               </div>
@@ -147,13 +182,19 @@ export default function Home() {
 
               {/* Method 3: Browser Extension */}
               <div
+                onClick={() => openManualMethod('method3')}
                 style={{
                   border: '1px solid rgba(255,255,255,0.1)',
-                  background: 'rgba(0,0,0,0.2)',
-                  padding: '10px', borderRadius: '12px', cursor: 'not-allowed', textAlign: 'center', opacity: 0.6
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  padding: '10px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center',
+                  transition: 'all 0.2s',
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}
+                className={styles.methodCardHover}
                 title="Browser Extension (Manual)"
               >
+                <div style={{ position: 'absolute', top: 5, right: 5, opacity: 0.5 }}><BookOpen size={14} /></div>
                 <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#fff' }}>Method 3</div>
                 <div style={{ fontSize: '0.75rem', color: '#888' }}>Extension (Browser)</div>
               </div>
@@ -348,6 +389,76 @@ export default function Home() {
               ))}
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* MANUAL MODAL */}
+      <AnimatePresence>
+        {modalContent && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 2000,
+            background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              style={{
+                background: '#1a1a1a', border: '1px solid #333',
+                width: '90%', maxWidth: '600px', borderRadius: '16px',
+                padding: '25px', color: '#fff', position: 'relative',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+              }}
+            >
+              <button
+                onClick={() => setModalContent(null)}
+                style={{ position: 'absolute', top: 15, right: 15, background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}
+              >
+                <X size={24} />
+              </button>
+
+              <h2 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {modalContent.type === 'code' ? <Terminal size={24} color="#00e676" /> : <BookOpen size={24} color="#00e676" />}
+                {modalContent.title}
+              </h2>
+
+              {modalContent.type === 'code' ? (
+                <div>
+                  <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '15px' }}>
+                    Copy the code below, open your browser's Developer Console (F12) on the Instagram page, paste it, and hit Enter.
+                  </p>
+                  <div style={{ position: 'relative' }}>
+                    <textarea
+                      readOnly
+                      value={modalContent.content}
+                      style={{
+                        width: '100%', height: '300px', background: '#000', color: '#00e676',
+                        fontFamily: 'monospace', padding: '15px', borderRadius: '8px', border: '1px solid #333',
+                        resize: 'none', outline: 'none', fontSize: '0.8rem'
+                      }}
+                    />
+                    <button
+                      onClick={() => copyToClipboard(modalContent.content)}
+                      style={{
+                        position: 'absolute', top: 10, right: 10,
+                        background: 'rgba(255,255,255,0.1)', border: 'none',
+                        color: '#fff', padding: '5px 10px', borderRadius: '6px',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px',
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      <Copy size={16} /> Copy
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ lineHeight: '1.6', color: '#ddd' }}>
+                  <div dangerouslySetInnerHTML={{ __html: modalContent.content.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\`(.*?)\`/g, '<code style="background:rgba(255,255,255,0.1);padding:2px 5px;border-radius:4px">$1</code>') }} />
+                </div>
+              )}
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
